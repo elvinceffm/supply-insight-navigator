@@ -1,0 +1,167 @@
+import { useMemo, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { getBrandSuppliers } from "@/data/mockSuppliers";
+import { computeRiskScore, colorClass, type Supplier } from "@/lib/risk";
+import { exportSuppliersCsv } from "@/lib/export";
+
+const Brand = () => {
+  const { slug = "brand" } = useParams();
+  const navigate = useNavigate();
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [query, setQuery] = useState("");
+
+  const suppliers = useMemo(() => getBrandSuppliers(slug), [slug]);
+
+  const filtered = useMemo(() => {
+    return suppliers
+      .filter((s) => (countryFilter === "all" ? true : s.country === countryFilter))
+      .filter((s) => (query ? s.name.toLowerCase().includes(query.toLowerCase()) : true))
+      .map((s) => ({ ...s, score: computeRiskScore(s) }))
+      .sort((a, b) => b.score - a.score);
+  }, [suppliers, countryFilter, query]);
+
+  const countries = useMemo(
+    () => Array.from(new Set(suppliers.map((s) => s.country))).sort(),
+    [suppliers]
+  );
+
+  const title = `${slug.replace(/-/g, " ")} – Supplier Risk | Open Supply Risk Explorer`;
+  const description = `Risk-scored suppliers for ${slug.replace(/-/g, " ")}. Download lists and view heat map.`;
+
+  return (
+    <main className="container py-10">
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={`${window.location.origin}/brand/${slug}`} />
+      </Helmet>
+
+      <header className="mb-8">
+        <nav className="text-sm text-muted-foreground mb-2">
+          <Link to="/">Home</Link> / <span className="capitalize">{slug}</span>
+        </nav>
+        <h1 className="text-3xl md:text-4xl font-bold capitalize">
+          {slug.replace(/-/g, " ")}
+        </h1>
+        <p className="text-muted-foreground mt-2">Based on OSH Public Lists (POC dataset)</p>
+      </header>
+
+      <section className="grid gap-6 md:grid-cols-3">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Suppliers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-3 mb-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search suppliers"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+              <Select value={countryFilter} onValueChange={(v) => setCountryFilter(v)}>
+                <SelectTrigger className="w-full md:w-56">
+                  <SelectValue placeholder="Filter by country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All countries</SelectItem>
+                  {countries.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" onClick={() => exportSuppliersCsv(`${slug}-suppliers`, suppliers)}>
+                Export CSV
+              </Button>
+              <Button variant="hero" onClick={() => navigate(`/brand/${slug}/map`)}>
+                Open Heat Map
+              </Button>
+            </div>
+
+            <div className="overflow-x-auto rounded-md border">
+              <table className="w-full text-left">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="p-3">Supplier</th>
+                    <th className="p-3">OS ID</th>
+                    <th className="p-3">Country</th>
+                    <th className="p-3">Source</th>
+                    <th className="p-3">Risk</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((s) => (
+                    <tr key={s.id} className="border-t">
+                      <td className="p-3 font-medium">{s.name}</td>
+                      <td className="p-3 text-muted-foreground">{s.os_id}</td>
+                      <td className="p-3">{s.country}</td>
+                      <td className="p-3 text-muted-foreground">{s.contributor}</td>
+                      <td className="p-3">
+                        <span className={`inline-flex items-center px-2 py-1 rounded ${colorClass((s as any).score)}`}>
+                          {(s as any).score}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Holistic Risk Assessment</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Combined score based on governance, labor, environment, and sector compliance.
+            </p>
+            <div className="space-y-3">
+              {summaryByBand(suppliers).map((r) => (
+                <Band key={r.label} label={r.label} value={r.value} color={r.color} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+    </main>
+  );
+};
+
+function summaryByBand(suppliers: Supplier[]) {
+  const scored = suppliers.map((s) => computeRiskScore(s));
+  const total = scored.length || 1;
+  const green = Math.round((scored.filter((n) => n >= 70).length / total) * 100);
+  const yellow = Math.round((scored.filter((n) => n >= 40 && n < 70).length / total) * 100);
+  const red = Math.round((scored.filter((n) => n < 40).length / total) * 100);
+  return [
+    { label: "Low risk", value: green, color: "bg-emerald-500" },
+    { label: "Medium risk", value: yellow, color: "bg-amber-500" },
+    { label: "High risk", value: red, color: "bg-rose-500" },
+  ];
+}
+
+function Band({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-sm mb-1">
+        <span>{label}</span>
+        <span className="text-muted-foreground">{value}%</span>
+      </div>
+      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
+export default Brand;
