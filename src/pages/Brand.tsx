@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { getBrandSuppliers } from "@/data/mockSuppliers";
-import { computeRiskScore, colorClass, type Supplier } from "@/lib/risk";
+import { computeRiskScore, colorClass, riskColor, type Supplier } from "@/lib/risk";
 import { exportSuppliersCsv } from "@/lib/export";
 
 const Brand = () => {
@@ -32,7 +32,9 @@ const Brand = () => {
 
   const title = `${slug.replace(/-/g, " ")} – Supplier Risk | Open Supply Risk Explorer`;
   const description = `Risk-scored suppliers for ${slug.replace(/-/g, " ")}. Download lists and view heat map.`;
-
+  const aggregate = useMemo(() => aggregateScore(suppliers), [suppliers]);
+  const bands = useMemo(() => summaryByBand(suppliers), [suppliers]);
+  
   return (
     <main className="container py-10">
       <Helmet>
@@ -125,8 +127,21 @@ const Brand = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Combined score based on governance, labor, environment, and sector compliance.
             </p>
+
+            <div className="mb-4 rounded-md border bg-muted/30 p-4">
+              <div className="flex items-center gap-4">
+                <TrafficLight level={riskColor(aggregate)} />
+                <div>
+                  <p className="text-sm font-medium">Aggregated risk score</p>
+                  <p className="text-sm text-muted-foreground">
+                    Score {aggregate}/100. Distribution: Low {bands[0].value}%, Medium {bands[1].value}%, High {bands[2].value}%.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-3">
-              {summaryByBand(suppliers).map((r) => (
+              {bands.map((r) => (
                 <Band key={r.label} label={r.label} value={r.value} color={r.color} />
               ))}
             </div>
@@ -148,6 +163,24 @@ function summaryByBand(suppliers: Supplier[]) {
     { label: "Medium risk", value: yellow, color: "bg-amber-500" },
     { label: "High risk", value: red, color: "bg-rose-500" },
   ];
+}
+
+function aggregateScore(suppliers: Supplier[]): number {
+  if (!suppliers.length) return 0;
+  const scored = suppliers.map((s) => computeRiskScore(s));
+  const avg = scored.reduce((a, b) => a + b, 0) / scored.length;
+  return Math.round(avg);
+}
+
+function TrafficLight({ level }: { level: "green" | "yellow" | "red" }) {
+  const base = "h-3 w-3 rounded-full ring-1 ring-border transition-all";
+  return (
+    <div className="flex items-center gap-1.5" aria-label={`Risk level: ${level}`} role="img">
+      <span className={`${base} ${level === "red" ? "bg-rose-500 shadow-sm" : "bg-muted opacity-60"}`} />
+      <span className={`${base} ${level === "yellow" ? "bg-amber-500 shadow-sm" : "bg-muted opacity-60"}`} />
+      <span className={`${base} ${level === "green" ? "bg-emerald-500 shadow-sm" : "bg-muted opacity-60"}`} />
+    </div>
+  );
 }
 
 function Band({ label, value, color }: { label: string; value: number; color: string }) {
