@@ -8,6 +8,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { getBrandSuppliers } from "@/data/mockSuppliers";
 import { computeRiskScore, colorClass, riskColor, type Supplier } from "@/lib/risk";
 import { exportSuppliersCsv } from "@/lib/export";
+import { RadialScore } from "@/components/ui/radial-score";
 
 const Brand = () => {
   const { slug = "brand" } = useParams();
@@ -107,9 +108,16 @@ const Brand = () => {
                       <td className="p-3">{s.country}</td>
                       <td className="p-3 text-muted-foreground">{s.contributor}</td>
                       <td className="p-3">
-                        <span className={`inline-flex items-center px-2 py-1 rounded ${colorClass((s as any).score)}`}>
-                          {(s as any).score}
-                        </span>
+                        <RadialScore
+                          value={(s as any).score}
+                          tooltipMetrics={[
+                            { label: "Democracy index", value: s.indicators?.countryGovernance },
+                            { label: "Regime hostility", value: s.indicators?.sectorCompliance },
+                            { label: "Import dependency (strategic goods)", value: undefined },
+                            { label: "Human rights/repressions", value: s.indicators?.laborRights },
+                            { label: "ESG", value: s.indicators?.environmental },
+                          ]}
+                        />
                       </td>
                     </tr>
                   ))}
