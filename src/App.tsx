@@ -9,7 +9,9 @@ import NotFound from "./pages/NotFound";
 import Brand from "./pages/Brand";
 import BrandMap from "./pages/BrandMap";
 import TrustedPartners from "./pages/TrustedPartners";
-
+import Blog from "./pages/Blog";
+import TrustedPartnerDetail from "./pages/TrustedPartnerDetail";
+import TopIslandTabs from "./components/TopIslandTabs";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -19,11 +21,14 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <TopIslandTabs />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/blog" element={<Blog />} />
             <Route path="/brand/:slug" element={<Brand />} />
             <Route path="/brand/:slug/map" element={<BrandMap />} />
             <Route path="/trusted-partners" element={<TrustedPartners />} />
+            <Route path="/trusted-partners/:slug" element={<TrustedPartnerDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

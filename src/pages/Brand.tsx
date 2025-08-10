@@ -9,7 +9,7 @@ import { getBrandSuppliers } from "@/data/mockSuppliers";
 import { computeRiskScore, colorClass, riskColor, type Supplier } from "@/lib/risk";
 import { exportSuppliersCsv } from "@/lib/export";
 import { RadialScore } from "@/components/ui/radial-score";
-
+import SupplierMap from "@/components/map/SupplierMap";
 const Brand = () => {
   const { slug = "brand" } = useParams();
   const navigate = useNavigate();
@@ -53,6 +53,21 @@ const Brand = () => {
         </h1>
         <p className="text-muted-foreground mt-2">Based on OSH Public Lists (POC dataset)</p>
       </header>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Risk Heat Map Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <SupplierMap suppliers={suppliers} wrapperClassName="w-full h-64 rounded-lg overflow-hidden border border-border" />
+            <Link to={`/brand/${slug}/map`} className="absolute top-3 right-3 inline-flex items-center gap-2 rounded-full bg-background/80 backdrop-blur px-3 py-1.5 text-sm border hover-scale">
+              Expand map
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">Country colors reflect averaged supplier risk per country. Click to open the full interactive map.</p>
+        </CardContent>
+      </Card>
 
       <section className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-2">
