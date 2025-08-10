@@ -24,7 +24,7 @@ const BrandMap = () => {
           <Link to="/">Home</Link> / <Link to={`/brand/${slug}`} className="capitalize">{slug}</Link> / Map
         </nav>
         <h1 className="text-3xl font-bold">Supplier Heat Map</h1>
-        <p className="text-muted-foreground mt-2">Pins are color-coded by risk score.</p>
+        <p className="text-muted-foreground mt-2">Countries are colored by aggregated risk; pins are color-coded by supplier risk.</p>
       </header>
 
       <SupplierMap suppliers={suppliers} />
