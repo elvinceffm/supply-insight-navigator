@@ -54,9 +54,9 @@ const Index = () => {
             preload="metadata"
             poster="/videos/ukraine_poster.jpg"
           >
-            <source src="/videos/vilna_ukraina.mp4" type="video/mp4" />
+            <source src="/videos/vilna_ukraina_2_st.mp4" type="video/mp4" />
             {/* Optional: add a WebM fallback if available */}
-            {/* <source src="/videos/vilna_ukraina.webm" type="video/webm" /> */}
+            {/* <source src="/videos/vilna_ukraina_2_st.webm" type="video/webm" /> */}
           </video>
           {/* Ultra-aggressive immediate fade gradient */}
           <div
