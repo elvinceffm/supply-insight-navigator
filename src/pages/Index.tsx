@@ -3,7 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
+import HeroGraph from "@/components/HeroGraph";
+import { ScanLine } from "lucide-react";
 const Index = () => {
   const navigate = useNavigate();
   const formRef = useRef<HTMLFormElement>(null);
@@ -34,6 +35,10 @@ const Index = () => {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const hoverRef = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<{ x: number; y: number; active: boolean } | null>(null);
+
   return (
     <main className="relative bg-background">
       <Helmet>
@@ -63,44 +68,69 @@ const Index = () => {
             className="absolute left-0 right-0 bottom-0 h-[45vh]"
             style={{
               opacity: fade, // Direct fade value, no additional manipulation
-              background: `linear-gradient(to bottom, 
-                rgba(255, 255, 255, 0) 0%, 
-                rgba(255, 255, 255, 0.08) 5%, 
-                rgba(255, 255, 255, 0.15) 10%, 
-                rgba(255, 255, 255, 0.25) 15%, 
-                rgba(255, 255, 255, 0.35) 20%, 
-                rgba(255, 255, 255, 0.45) 25%, 
-                rgba(255, 255, 255, 0.55) 30%, 
-                rgba(255, 255, 255, 0.65) 35%, 
-                rgba(255, 255, 255, 0.72) 40%, 
-                rgba(255, 255, 255, 0.78) 45%, 
-                rgba(255, 255, 255, 0.83) 50%, 
-                rgba(255, 255, 255, 0.87) 55%, 
-                rgba(255, 255, 255, 0.90) 60%, 
-                rgba(255, 255, 255, 0.93) 65%, 
-                rgba(255, 255, 255, 0.95) 70%, 
-                rgba(255, 255, 255, 0.97) 75%, 
-                rgba(255, 255, 255, 0.98) 80%, 
-                rgba(255, 255, 255, 0.99) 85%, 
-                rgba(255, 255, 255, 0.995) 90%, 
-                rgba(255, 255, 255, 0.998) 95%, 
-                rgb(255, 255, 255) 100%)`,
+              background: `linear-gradient(to bottom,
+                hsl(var(--background) / 0) 0%,
+                hsl(var(--background) / 0.08) 5%,
+                hsl(var(--background) / 0.15) 10%,
+                hsl(var(--background) / 0.25) 15%,
+                hsl(var(--background) / 0.35) 20%,
+                hsl(var(--background) / 0.45) 25%,
+                hsl(var(--background) / 0.55) 30%,
+                hsl(var(--background) / 0.65) 35%,
+                hsl(var(--background) / 0.72) 40%,
+                hsl(var(--background) / 0.78) 45%,
+                hsl(var(--background) / 0.83) 50%,
+                hsl(var(--background) / 0.87) 55%,
+                hsl(var(--background) / 0.90) 60%,
+                hsl(var(--background) / 0.93) 65%,
+                hsl(var(--background) / 0.95) 70%,
+                hsl(var(--background) / 0.97) 75%,
+                hsl(var(--background) / 0.98) 80%,
+                hsl(var(--background) / 0.99) 85%,
+                hsl(var(--background) / 0.995) 90%,
+                hsl(var(--background) / 0.998) 95%,
+                hsl(var(--background) / 1) 100%)`,
             }}
           />
         </div>
         <div className="relative z-10 w-full flex flex-col items-center justify-center text-center px-4">
-          <h1 className="font-brand text-4xl md:text-6xl font-bold tracking-tight text-white drop-shadow-lg">
-            Open Supply Risk Explorer
-          </h1>
-          <p className="mt-4 text-lg md:text-xl text-white/90 max-w-2xl mx-auto drop-shadow">
-            Search any brand’s public supplier list from OSH, view risk scores, explore a world heat map, and export the data.
-          </p>
-          <form ref={formRef} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl w-full mt-8 mx-auto">
-            <Input name="brand" placeholder="Search a brand (e.g. Samsung)" className="h-12 text-base" />
-            <Button type="submit" variant="hero" size="xl">Search</Button>
-          </form>
-          <div className="mt-6 text-sm text-white/80">
-            Or browse our <Link to="/trusted-partners" className="text-primary underline underline-offset-4">Trusted Partners</Link>
+          <div
+            ref={hoverRef}
+            onMouseEnter={() => setHover({ x: 0, y: 0, active: true })}
+            onMouseLeave={() => setHover((h) => (h ? { ...h, active: false } : null))}
+            onMouseMove={(e) => {
+              const rect = hoverRef.current?.getBoundingClientRect();
+              if (!rect) return;
+              setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, active: true });
+            }}
+            className="relative mx-auto max-w-2xl w-full"
+          >
+            <HeroGraph hover={hover || undefined} className="absolute inset-0 -z-10 text-primary/30 dark:text-primary/40" />
+
+            <h1 className="font-brand text-4xl md:text-6xl font-bold tracking-tight text-white drop-shadow-lg">
+              Open Supply Risk Explorer
+            </h1>
+            <p className="mt-4 text-lg md:text-xl text-white/90 mx-auto drop-shadow">
+              Search any brand’s public supplier list from OSH, view risk scores, explore a world heat map, and export the data.
+            </p>
+            <form ref={formRef} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl w-full mt-8 mx-auto">
+              <div className="relative w-full">
+                <Input name="brand" placeholder="Search a brand (e.g. Samsung)" className="h-12 text-base pr-12" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Scan barcode (coming soon)"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <ScanLine className="size-5" />
+                </Button>
+              </div>
+              <Button type="submit" variant="hero" size="xl">Search</Button>
+            </form>
+            <div className="mt-6 text-sm text-white/80">
+              Or browse our <Link to="/trusted-partners" className="text-primary underline underline-offset-4">Trusted Partners</Link>
+            </div>
           </div>
         </div>
       </section>

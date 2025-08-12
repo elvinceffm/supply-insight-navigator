@@ -12,6 +12,7 @@ import TrustedPartners from "./pages/TrustedPartners";
 import Blog from "./pages/Blog";
 import TrustedPartnerDetail from "./pages/TrustedPartnerDetail";
 import TopIslandTabs from "./components/TopIslandTabs";
+import TopRightActions from "./components/TopRightActions";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -22,6 +23,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <TopIslandTabs />
+          <TopRightActions />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/blog" element={<Blog />} />
