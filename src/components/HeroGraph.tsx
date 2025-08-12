@@ -1,21 +1,19 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 interface HeroGraphProps {
-  hover?: { x: number; y: number; active: boolean } | null;
   className?: string;
+  style?: CSSProperties;
 }
 
 // Subtle animated graph overlay rendered on a canvas.
 // Uses currentColor for strokes/fills so it adapts to theme and can be tuned via Tailwind (e.g., text-primary/30)
-export default function HeroGraph({ hover, className }: HeroGraphProps) {
+export default function HeroGraph({ className, style }: HeroGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const hoverState = useRef<HeroGraphProps["hover"]>(null);
+  type Hover = { x: number; y: number; active: boolean } | null;
+  const hoverState = useRef<Hover>(null);
 
-  // Keep latest hover without re-initializing the canvas loop
-  useEffect(() => {
-    hoverState.current = hover ?? null;
-  }, [hover]);
+  // Hover is handled internally via global pointer tracking
 
   useEffect(() => {
     const container = containerRef.current!;
@@ -48,7 +46,7 @@ export default function HeroGraph({ hover, className }: HeroGraphProps) {
     // Nodes and simple physics
     const NODE_COUNT = 26; // modest, subtle
     const MAX_SPEED = 0.25;
-    const LINK_DIST = 140; // px
+    const LINK_DIST = 160; // px, slightly wider for surrounding feel
 
     type Node = { x: number; y: number; vx: number; vy: number };
     const nodes: Node[] = Array.from({ length: NODE_COUNT }, () => ({
@@ -60,14 +58,21 @@ export default function HeroGraph({ hover, className }: HeroGraphProps) {
 
     let raf = 0;
 
-    const draw = () => {
+    const draw = (hs: { x: number; y: number; active: boolean } | null) => {
       const color = getComputedStyle(canvas).color; // currentColor
       ctx.clearRect(0, 0, width, height);
+
+      const BASE_LINE_ALPHA = 0.04;
+      const BASE_NODE_ALPHA = 0.08;
+      const REVEAL_RADIUS = 220;
+      const influence = (d: number) => {
+        const r = REVEAL_RADIUS;
+        return Math.exp(-(d * d) / (2 * r * r)); // gaussian falloff
+      };
 
       // Links
       ctx.lineWidth = 1;
       ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.22; // subtle lines
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const a = nodes[i];
@@ -76,8 +81,14 @@ export default function HeroGraph({ hover, className }: HeroGraphProps) {
           const dy = a.y - b.y;
           const d = Math.hypot(dx, dy);
           if (d < LINK_DIST) {
-            const alpha = 1 - d / LINK_DIST;
-            ctx.globalAlpha = 0.12 + alpha * 0.18; // 0.12-0.3
+            let alpha = BASE_LINE_ALPHA * (1 - d / LINK_DIST);
+            if (hs?.active) {
+              const mx = (a.x + b.x) / 2;
+              const my = (a.y + b.y) / 2;
+              const md = Math.hypot((hs.x ?? 0) - mx, (hs.y ?? 0) - my);
+              alpha += 0.28 * influence(md);
+            }
+            ctx.globalAlpha = Math.max(0, Math.min(0.36, alpha));
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
@@ -87,11 +98,19 @@ export default function HeroGraph({ hover, className }: HeroGraphProps) {
       }
 
       // Nodes
-      ctx.globalAlpha = 0.45;
       ctx.fillStyle = color;
       for (const n of nodes) {
+        let a = BASE_NODE_ALPHA;
+        let r = 1.6;
+        if (hs?.active) {
+          const nd = Math.hypot((hs.x ?? 0) - n.x, (hs.y ?? 0) - n.y);
+          const inf = influence(nd);
+          a += 0.42 * inf;
+          r += 2.0 * inf;
+        }
+        ctx.globalAlpha = Math.max(0, Math.min(0.8, a));
         ctx.beginPath();
-        ctx.arc(n.x, n.y, 2, 0, Math.PI * 2);
+        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -113,18 +132,18 @@ export default function HeroGraph({ hover, className }: HeroGraphProps) {
         if (n.x < 0 || n.x > width) n.vx *= -1;
         if (n.y < 0 || n.y > height) n.vy *= -1;
 
-        // Hover influence: mild attraction and slight speed-up
         if (hoverActive) {
           const dx = hx - n.x;
           const dy = hy - n.y;
           const d = Math.hypot(dx, dy) || 1;
-          const force = Math.min(0.012, 20 / (d * d)); // very subtle
-          n.vx += (dx / d) * force;
-          n.vy += (dy / d) * force;
+          // Mild attraction with a tiny perpendicular swirl
+          const force = Math.min(0.016, 24 / (d * d));
+          n.vx += (dx / d) * force + (-dy / d) * 0.002;
+          n.vy += (dy / d) * force + (dx / d) * 0.002;
 
           // Cap speed
           const sp = Math.hypot(n.vx, n.vy);
-          const max = MAX_SPEED * 1.8;
+          const max = MAX_SPEED * 1.9;
           if (sp > max) {
             n.vx = (n.vx / sp) * max;
             n.vy = (n.vy / sp) * max;
@@ -132,7 +151,7 @@ export default function HeroGraph({ hover, className }: HeroGraphProps) {
         }
       }
 
-      draw();
+      draw(hs || null);
       raf = requestAnimationFrame(step);
     };
 
@@ -145,7 +164,7 @@ export default function HeroGraph({ hover, className }: HeroGraphProps) {
   }, []);
 
   return (
-    <div ref={containerRef} className={className} aria-hidden>
+    <div ref={containerRef} className={className} style={style} aria-hidden>
       <canvas ref={canvasRef} className="block w-full h-full pointer-events-none" />
     </div>
   );

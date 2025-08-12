@@ -36,8 +36,7 @@ const Index = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const hoverRef = useRef<HTMLDivElement>(null);
-  const [hover, setHover] = useState<{ x: number; y: number; active: boolean } | null>(null);
+  // Hover handled internally by HeroGraph
 
   return (
     <main className="relative bg-background">
@@ -94,18 +93,11 @@ const Index = () => {
           />
         </div>
         <div className="relative z-10 w-full flex flex-col items-center justify-center text-center px-4">
-          <div
-            ref={hoverRef}
-            onMouseEnter={() => setHover({ x: 0, y: 0, active: true })}
-            onMouseLeave={() => setHover((h) => (h ? { ...h, active: false } : null))}
-            onMouseMove={(e) => {
-              const rect = hoverRef.current?.getBoundingClientRect();
-              if (!rect) return;
-              setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, active: true });
-            }}
-            className="relative mx-auto max-w-2xl w-full"
-          >
-            <HeroGraph hover={hover || undefined} className="absolute inset-0 -z-10 text-primary/30 dark:text-primary/40" />
+          <div className="relative mx-auto max-w-2xl w-full">
+            <HeroGraph
+              className="absolute -inset-x-24 -inset-y-10 -z-10 text-foreground/25 dark:text-foreground/30"
+              style={{ maskImage: "radial-gradient(120% 80% at 50% 40%, black 55%, transparent 100%)" }}
+            />
 
             <h1 className="font-brand text-4xl md:text-6xl font-bold tracking-tight text-white drop-shadow-lg">
               Open Supply Risk Explorer

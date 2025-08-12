@@ -34,7 +34,7 @@ export default function TopRightActions() {
           variant="ghost"
           size="icon"
           aria-label="Instagram (placeholder)"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-primary hover:bg-primary/10"
           asChild
         >
           <a href="#" tabIndex={0} onClick={(e) => e.preventDefault()}>
@@ -45,7 +45,7 @@ export default function TopRightActions() {
           variant="ghost"
           size="icon"
           aria-label="Donate (placeholder)"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-primary hover:bg-primary/10"
           asChild
         >
           <a href="#" tabIndex={0} onClick={(e) => e.preventDefault()}>
