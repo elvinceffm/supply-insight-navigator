@@ -34,7 +34,7 @@ export default function TopRightActions() {
           variant="ghost"
           size="icon"
           aria-label="Instagram (placeholder)"
-          className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+          className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
           asChild
         >
           <a href="#" tabIndex={0} onClick={(e) => e.preventDefault()}>
@@ -45,7 +45,7 @@ export default function TopRightActions() {
           variant="ghost"
           size="icon"
           aria-label="Donate (placeholder)"
-          className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+          className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
           asChild
         >
           <a href="#" tabIndex={0} onClick={(e) => e.preventDefault()}>
@@ -56,7 +56,7 @@ export default function TopRightActions() {
           variant="ghost"
           size="icon"
           aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
           onClick={() => setDark((v) => !v)}
         >
           {dark ? <Moon className="size-5" /> : <Sun className="size-5" />}
@@ -65,3 +65,5 @@ export default function TopRightActions() {
     </div>
   );
 }
+
+// TODO: Implement alternative access to buttons for smaller devices (burger menu), as TopRightActions tend to clog up top space
