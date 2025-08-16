@@ -92,18 +92,24 @@ const Index = () => {
             }}
           />
         </div>
+        
+        {/* Graph background that covers only the initial hero view */}
+        <HeroGraph
+          className="absolute top-0 left-0 right-0 z-5"
+          style={{ 
+            height: '100vh', // Only cover initial viewport, not the full 130vh
+            opacity: 0.6
+          }}
+          fadeOpacity={1 - fade} // Fade out as user scrolls (inverse of hero fade)
+        />
+        
         <div className="relative z-10 w-full flex flex-col items-center justify-center text-center px-4">
           <div className="relative mx-auto max-w-2xl w-full">
-            <HeroGraph
-              className="absolute -inset-x-24 -inset-y-10 -z-10 text-foreground/25 dark:text-foreground/30"
-              style={{ maskImage: "radial-gradient(120% 80% at 50% 40%, black 55%, transparent 100%)" }}
-            />
-
             <h1 className="font-brand text-4xl md:text-6xl font-bold tracking-tight text-white drop-shadow-lg">
               Open Supply Risk Explorer
             </h1>
             <p className="mt-4 text-lg md:text-xl text-white/90 mx-auto drop-shadow">
-              Search any brand’s public supplier list from OSH, view risk scores, explore a world heat map, and export the data.
+              Search any brand's public supplier list from OSH, view risk scores, explore a world heat map, and export the data.
             </p>
             <form ref={formRef} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl w-full mt-8 mx-auto">
               <div className="relative w-full">
@@ -113,7 +119,7 @@ const Index = () => {
                   variant="ghost"
                   size="icon"
                   aria-label="Scan barcode (coming soon)"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary hover:bg-primary/1"
                 >
                   <ScanLine className="size-5" />
                 </Button>
@@ -142,6 +148,7 @@ const Index = () => {
             <h2 className="text-xl font-semibold">White paper</h2>
             <p className="mt-2 text-muted-foreground">Read the methodology and roadmap in our white paper.</p>
             <a href="https://example.com/whitepaper" target="_blank" rel="noreferrer" className="inline-block mt-3">
+              {/* TODO: might change to blue as well later */}
               <Button variant="outline">Open white paper</Button>
             </a>
           </article>
