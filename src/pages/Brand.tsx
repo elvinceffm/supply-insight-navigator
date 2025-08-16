@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { getBrandSuppliers } from "@/data/mockSuppliers";
+import { fetchBrandSuppliers } from "@/lib/api";
 import { computeRiskScore, colorClass, riskColor, type Supplier } from "@/lib/risk";
 import { exportSuppliersCsv } from "@/lib/export";
 import { RadialScore } from "@/components/ui/radial-score";
@@ -15,8 +15,31 @@ const Brand = () => {
   const navigate = useNavigate();
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const suppliers = useMemo(() => getBrandSuppliers(slug), [slug]);
+  // Load supplier data from API
+  useEffect(() => {
+    const loadSuppliers = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const brandName = slug.replace(/-/g, " ");
+        const supplierData = await fetchBrandSuppliers(brandName);
+        setSuppliers(supplierData);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load supplier data";
+        setError(errorMessage);
+        setSuppliers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSuppliers();
+  }, [slug]);
 
   const filtered = useMemo(() => {
     return suppliers
@@ -35,6 +58,48 @@ const Brand = () => {
   const description = `Risk-scored suppliers for ${slug.replace(/-/g, " ")}. Download lists and view heat map.`;
   const aggregate = useMemo(() => aggregateScore(suppliers), [suppliers]);
   const bands = useMemo(() => summaryByBand(suppliers), [suppliers]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <main className="container py-10">
+        <header className="mb-8">
+          <nav className="text-sm text-muted-foreground mb-2">
+            <Link to="/">Home</Link> / <span className="capitalize">{slug}</span>
+          </nav>
+          <h1 className="text-3xl font-bold capitalize">{slug.replace(/-/g, " ")}</h1>
+          <p className="text-muted-foreground">Loading supplier data...</p>
+        </header>
+        <div className="flex justify-center items-center min-h-[200px]">
+          <div className="animate-pulse text-muted-foreground">Loading suppliers...</div>
+        </div>
+      </main>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <main className="container py-10">
+        <header className="mb-8">
+          <nav className="text-sm text-muted-foreground mb-2">
+            <Link to="/">Home</Link> / <span className="capitalize">{slug}</span>
+          </nav>
+          <h1 className="text-3xl font-bold capitalize">{slug.replace(/-/g, " ")}</h1>
+        </header>
+        <div className="text-center py-20">
+          <div className="text-red-600 mb-4">⚠️ Error Loading Data</div>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <div className="space-x-4">
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+            <Button variant="outline" onClick={() => navigate("/")}>
+              Go Home
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
   
   return (
     <main className="container py-10">

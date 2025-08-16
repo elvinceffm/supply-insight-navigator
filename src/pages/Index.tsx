@@ -4,18 +4,35 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import HeroGraph from "@/components/HeroGraph";
+import { fetchBrandSuppliers } from "@/lib/api";
 import { ScanLine } from "lucide-react";
 const Index = () => {
   const navigate = useNavigate();
   const formRef = useRef<HTMLFormElement>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = new FormData(formRef.current || undefined);
     const brand = String(data.get("brand") || "").trim();
     if (!brand) return;
-    const slug = brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    navigate(`/brand/${slug}`);
+
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      // Test API call to validate brand exists
+      await fetchBrandSuppliers(brand);
+      
+      // If successful, navigate to brand page
+      const slug = brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      navigate(`/brand/${slug}`);
+    } catch (error) {
+      setSearchError(error instanceof Error ? error.message : "An unexpected error occurred");
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const title = "Open Supply Risk Explorer – Brand Supplier Risks";
@@ -113,19 +130,32 @@ const Index = () => {
             </p>
             <form ref={formRef} onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl w-full mt-8 mx-auto">
               <div className="relative w-full">
-                <Input name="brand" placeholder="Search a brand (e.g. Samsung)" className="h-12 text-base pr-12" />
+                <Input 
+                  name="brand" 
+                  placeholder="Search a brand (e.g. Dell, Samsung)" 
+                  className="h-12 text-base pr-12"
+                  disabled={isSearching}
+                />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   aria-label="Scan barcode (coming soon)"
                   className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary hover:bg-primary/1"
+                  disabled={isSearching}
                 >
                   <ScanLine className="size-5" />
                 </Button>
               </div>
-              <Button type="submit" variant="hero" size="xl">Search</Button>
+              <Button type="submit" variant="hero" size="xl" disabled={isSearching}>
+                {isSearching ? "Searching..." : "Search"}
+              </Button>
             </form>
+            {searchError && (
+              <div className="mt-4 text-red-400 text-sm bg-red-900/20 border border-red-800/30 rounded-lg px-4 py-2 max-w-xl mx-auto">
+                {searchError}
+              </div>
+            )}
             <div className="mt-6 text-sm text-white/80">
               Or browse our <Link to="/trusted-partners" className="text-primary underline underline-offset-4">Trusted Partners</Link>
             </div>
